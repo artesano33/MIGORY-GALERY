@@ -26,8 +26,13 @@ jobs:
         with:
           node-version: 20
 
+      - name: Preparar el sitio
+        run: |
+          mkdir -p sitio
+          cp index.html sitio/
+
       - name: Leer la wallet
-        run: node scripts/leer-wallet.mjs
+        run: node leer-wallet.mjs
         env:
           HELIUS_API_KEY: ${{ secrets.HELIUS_API_KEY }}
           WALLET_ADDRESS: ${{ secrets.WALLET_ADDRESS }}
