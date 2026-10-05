@@ -217,23 +217,25 @@ dialog::backdrop{background:rgba(3,4,3,.9);backdrop-filter:blur(8px)}
      colección, el nombre del NFT o sus atributos.
    - colecciones: IDs de colección (los imprime la acción de GitHub
      en el paso "Leer la wallet"). Si pones al menos uno, la sala
-     solo acepta NFTs de esas colecciones. Es lo más seguro contra
-     NFTs falsos que llegan como spam.
+     solo acepta NFTs de esas colecciones que además coincidan con
+     las palabras de "buscar". Así se descartan colecciones antiguas
+     y NFTs falsos que llegan como spam.
+     Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE = colección MIGORY
    - estilo: "orbita", "capsulas" o "marcos".
    ================================================================= */
 const SALAS = [
   { id:"fun-guys", titulo:"Fun Guys", subtitulo:"Ya despertaron", estilo:"orbita", tono:140,
     texto:"Giran en torno a la misma luz que dio origen a todo. Arrastra el círculo para recorrerlos y toca cualquiera para verlo de cerca.",
-    buscar:["fun guy","funguy","fun guys"], colecciones:[] },
+    buscar:["fun guy","funguy","fun guys"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
   { id:"plastiks", titulo:"Plastiks", subtitulo:"Nacidos de las cápsulas", estilo:"capsulas", tono:275,
     texto:"Flotan en el vacío con su propio color y su propio resplandor. Las que ya se abrieron muestran lo que guardaban; las demás siguen selladas, esperando su revelación.",
-    buscar:["plastik"], colecciones:[] },
+    buscar:["plastik"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
   { id:"agentes", titulo:"Agentes", subtitulo:"Recién llegados", estilo:"marcos", tono:195,
-    texto:"Nuevas presencias en el Migoryverse.", buscar:["agent"], colecciones:[] },
+    texto:"Nuevas presencias en el Migoryverse.", buscar:["agent"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
   { id:"infernals", titulo:"Infernals", subtitulo:"Recién llegados", estilo:"marcos", tono:10,
-    texto:"Nuevas presencias en el Migoryverse.", buscar:["infernal"], colecciones:[] },
+    texto:"Nuevas presencias en el Migoryverse.", buscar:["infernal"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
   { id:"terrestrials", titulo:"Terrestrials", subtitulo:"Recién llegados", estilo:"marcos", tono:100,
-    texto:"Nuevas presencias en el Migoryverse.", buscar:["terrestrial"], colecciones:[] }
+    texto:"Nuevas presencias en el Migoryverse.", buscar:["terrestrial"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] }
 ];
 
 /* Cómo saber si una cápsula sigue sellada. Se considera sin revelar si:
@@ -268,9 +270,9 @@ function clasificar(nfts){
   for(const n of nfts){
     if(!n || !n.coleccionId) continue;               // solo colecciones verificadas
     const texto = norm([n.coleccion, n.nombre, ...(n.atributos||[]).map(a=>a.tipo+" "+a.valor)].join(" "));
-    const sala = salas.find(s => s.colecciones.length
-      ? s.colecciones.includes(n.coleccionId)
-      : s.buscar.some(b => texto.includes(norm(b))));
+    const sala = salas.find(s =>
+      (!s.colecciones.length || s.colecciones.includes(n.coleccionId)) &&
+      s.buscar.some(b => texto.includes(norm(b))));
     if(sala) sala.piezas.push(n);
   }
   for(const s of salas){
