@@ -63,6 +63,42 @@ const nfts = activos
     };
   });
 
+// ---------- Detección de piezas sin revelar ----------
+// Una imagen que comparten varias piezas de la misma colección es una imagen provisional
+// (por ejemplo, la moneda antes de revelarse). Se recuerda de una ejecución a otra leyendo
+// el nfts.json ya publicado, para que la última pieza sellada no se confunda con una revelada.
+const PALABRAS_SIN_REVELAR = /unreveal|not revealed|sin revelar|mystery|hidden/i;
+
+async function marcadoresAnteriores() {
+  const repo = process.env.GITHUB_REPOSITORY || "";
+  const [dueno, nombre] = repo.split("/");
+  if (!dueno || !nombre) return [];
+  const base = nombre.toLowerCase() === `${dueno.toLowerCase()}.github.io`
+    ? `https://${dueno.toLowerCase()}.github.io`
+    : `https://${dueno.toLowerCase()}.github.io/${nombre}`;
+  try {
+    const r = await fetch(`${base}/data/nfts.json`, { signal: AbortSignal.timeout(10000), cache: "no-store" });
+    if (!r.ok) return [];
+    const j = await r.json();
+    return Array.isArray(j.marcadores) ? j.marcadores : [];
+  } catch {
+    return [];
+  }
+}
+
+const marcadores = new Set(await marcadoresAnteriores());
+const usos = {};
+for (const n of nfts) {
+  if (!n.imagen || !n.coleccionId) continue;
+  const k = n.coleccionId + "|" + n.imagen;
+  usos[k] = (usos[k] || 0) + 1;
+}
+for (const [k, c] of Object.entries(usos)) if (c > 1) marcadores.add(k.split("|").slice(1).join("|"));
+for (const n of nfts) {
+  const textoAtributos = n.atributos.map(a => a.tipo + " " + a.valor).join(" ");
+  n.sinRevelar = !n.imagen || marcadores.has(n.imagen) || PALABRAS_SIN_REVELAR.test(n.nombre + " " + textoAtributos);
+}
+
 // Resumen en el registro de la acción, para copiar los IDs de colección a la galería.
 const resumen = {};
 for (const n of nfts) {
@@ -70,12 +106,12 @@ for (const n of nfts) {
   resumen[k] ??= { coleccion: n.coleccion || "(sin nombre)", piezas: 0 };
   resumen[k].piezas++;
 }
-console.log(`\nNFTs encontrados: ${nfts.length}\n\nColecciones (ID y nombre):`);
+console.log(`\nNFTs encontrados: ${nfts.length} (sin revelar: ${nfts.filter(n => n.sinRevelar).length})\n\nColecciones (ID y nombre):`);
 for (const [id, v] of Object.entries(resumen)) console.log(`  ${id}  ${v.coleccion}  (${v.piezas})`);
 
 await mkdir("sitio/data", { recursive: true });
 await writeFile(
   "sitio/data/nfts.json",
-  JSON.stringify({ actualizado: new Date().toISOString(), nfts }, null, 2)
+  JSON.stringify({ actualizado: new Date().toISOString(), marcadores: [...marcadores], nfts }, null, 2)
 );
 console.log("\nGuardado en sitio/data/nfts.json");
