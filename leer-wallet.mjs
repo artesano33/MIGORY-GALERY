@@ -1,6 +1,7 @@
 // Lee los NFTs de la wallet con la API DAS de Helius y los guarda en sitio/data/nfts.json.
 // Lo ejecuta GitHub Actions; la clave y la wallet llegan como secretos y nunca se publican.
 import { mkdir, writeFile } from "node:fs/promises";
+import { execSync } from "node:child_process";
 
 const KEY = process.env.HELIUS_API_KEY;
 const WALLET = process.env.WALLET_ADDRESS;
@@ -69,24 +70,24 @@ const nfts = activos
 // el nfts.json ya publicado, para que la última pieza sellada no se confunda con una revelada.
 const PALABRAS_SIN_REVELAR = /unreveal|not revealed|sin revelar|mystery|hidden/i;
 
-async function marcadoresAnteriores() {
+async function datosAnteriores() {
   const repo = process.env.GITHUB_REPOSITORY || "";
   const [dueno, nombre] = repo.split("/");
-  if (!dueno || !nombre) return [];
+  if (!dueno || !nombre) return {};
   const base = nombre.toLowerCase() === `${dueno.toLowerCase()}.github.io`
     ? `https://${dueno.toLowerCase()}.github.io`
     : `https://${dueno.toLowerCase()}.github.io/${nombre}`;
   try {
     const r = await fetch(`${base}/data/nfts.json`, { signal: AbortSignal.timeout(10000), cache: "no-store" });
-    if (!r.ok) return [];
-    const j = await r.json();
-    return Array.isArray(j.marcadores) ? j.marcadores : [];
+    if (!r.ok) return {};
+    return await r.json();
   } catch {
-    return [];
+    return {};
   }
 }
 
-const marcadores = new Set(await marcadoresAnteriores());
+const anterior = await datosAnteriores();
+const marcadores = new Set(Array.isArray(anterior.marcadores) ? anterior.marcadores : []);
 const usos = {};
 for (const n of nfts) {
   if (!n.imagen || !n.coleccionId) continue;
@@ -98,6 +99,98 @@ for (const n of nfts) {
   const textoAtributos = n.atributos.map(a => a.tipo + " " + a.valor).join(" ");
   n.sinRevelar = !n.imagen || marcadores.has(n.imagen) || PALABRAS_SIN_REVELAR.test(n.nombre + " " + textoAtributos);
 }
+
+// ---------- Color dominante de cada imagen ----------
+// Se calcula aquí (en GitHub) para que la galería sepa el color de cada pieza revelada
+// antes de mostrar la imagen. Los colores ya calculados se reutilizan de la versión publicada.
+const colores = (anterior.colores && typeof anterior.colores === "object") ? anterior.colores : {};
+
+function rgbAHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+  }
+  return { h: Math.round(h) % 360, s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+function colorDominante(px, ancho, alto) {
+  // Histograma de tonos ponderado por lo vivo de cada píxel (saturación × brillo) y por su
+  // cercanía al centro, donde suele estar el personaje: así pesa más su color que el del fondo.
+  const bins = Array.from({ length: 36 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
+  let total = 0, sr = 0, sg = 0, sb = 0, n = 0;
+  for (let i = 0; i < px.length; i += 3) {
+    const r = px[i], g = px[i + 1], b = px[i + 2];
+    const p = i / 3, x = (p % ancho) / ancho - 0.5, y = Math.floor(p / ancho) / alto - 0.5;
+    const centro = Math.exp(-(x * x + y * y) / (2 * 0.15 * 0.15));
+    sr += r; sg += g; sb += b; n++;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), v = max / 255;
+    if (v < 0.12) continue;
+    const sat = max === 0 ? 0 : (max - min) / max, w = sat * sat * v * (0.02 + centro);
+    if (w < 0.02) continue;
+    let h = 0;
+    if (max !== min) {
+      const d = max - min;
+      h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h *= 60;
+    }
+    const k = Math.floor(h / 10) % 36;
+    bins[k].w += w; bins[k].r += r * w; bins[k].g += g * w; bins[k].b += b * w; total += w;
+  }
+  if (total < n * 0.005) return rgbAHsl(sr / n, sg / n, sb / n); // imagen casi sin color
+  let mejor = 0, mejorW = -1;
+  for (let k = 0; k < 36; k++) {
+    const w = bins[(k + 35) % 36].w + bins[k].w + bins[(k + 1) % 36].w;
+    if (w > mejorW) { mejorW = w; mejor = k; }
+  }
+  let W = 0, R = 0, G = 0, B = 0;
+  for (const k of [(mejor + 35) % 36, mejor, (mejor + 1) % 36]) { W += bins[k].w; R += bins[k].r; G += bins[k].g; B += bins[k].b; }
+  return rgbAHsl(R / W, G / W, B / W);
+}
+
+async function cargarSharp() {
+  try { return (await import("sharp")).default; } catch {}
+  try {
+    console.log("Instalando la herramienta de imágenes (sharp)...");
+    execSync("npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.33.5", { stdio: "inherit" });
+    return (await import("sharp")).default;
+  } catch (e) {
+    console.log("No se pudo instalar sharp; las piezas usarán su color por defecto.", e.message);
+    return null;
+  }
+}
+
+const pendientes = [...new Set(nfts.map(n => n.imagen).filter(u => /^https?:\/\//i.test(u) && !colores[u]))];
+if (pendientes.length) {
+  const sharp = await cargarSharp();
+  if (sharp) {
+    let i = 0;
+    const trabajador = async () => {
+      while (i < pendientes.length) {
+        const url = pendientes[i++];
+        try {
+          const r = await fetch(url, { signal: AbortSignal.timeout(25000) });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          const buf = Buffer.from(await r.arrayBuffer());
+          const { data, info } = await sharp(buf, { animated: false }).resize(64, 64, { fit: "inside" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+          colores[url] = colorDominante(data, info.width, info.height);
+        } catch (e) {
+          console.log(`  No se pudo leer el color de una imagen (${e.message})`);
+        }
+      }
+    };
+    await Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]);
+  }
+}
+const enUso = {};
+for (const n of nfts) {
+  if (colores[n.imagen]) { n.color = colores[n.imagen]; enUso[n.imagen] = colores[n.imagen]; }
+}
+console.log(`Colores calculados: ${Object.keys(enUso).length} imágenes.`);
 
 // Resumen en el registro de la acción, para copiar los IDs de colección a la galería.
 const resumen = {};
@@ -112,6 +205,6 @@ for (const [id, v] of Object.entries(resumen)) console.log(`  ${id}  ${v.colecci
 await mkdir("sitio/data", { recursive: true });
 await writeFile(
   "sitio/data/nfts.json",
-  JSON.stringify({ actualizado: new Date().toISOString(), marcadores: [...marcadores], nfts }, null, 2)
+  JSON.stringify({ actualizado: new Date().toISOString(), marcadores: [...marcadores], colores: enUso, nfts }, null, 2)
 );
 console.log("\nGuardado en sitio/data/nfts.json");
