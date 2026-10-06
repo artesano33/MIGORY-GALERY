@@ -494,12 +494,21 @@ function hash(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h
 const words=["Ninguno","Uno","Dos","Tres","Cuatro","Cinco","Seis","Siete","Ocho","Nueve","Diez"];
 const contar = n => words[n] || String(n);
 
-function artNode(nft, alt){
-  const url = safeUrl(nft.imagen);
-  if(!url){ const d=document.createElement("span"); d.className="art-missing"; d.textContent="Imagen no disponible"; return d; }
+/* Imágenes ligeras: la acción de GitHub guarda cada imagen en dos tamaños (img/…-640.webp para
+   las salas e img/…-1400.webp para la ficha y la ceremonia). Si faltan, se usa la original. */
+const RUTA_LIGERA=/^img\/[a-f0-9]{16}-\d+\.webp$/;
+function artNode(nft, alt, grande){
+  const original = safeUrl(nft.imagen);
+  const ligera = grande ? nft.grande : nft.mini;
+  const url = (typeof ligera==="string" && RUTA_LIGERA.test(ligera)) ? ligera : original;
+  const falta=()=>{ const d=document.createElement("span"); d.className="art-missing"; d.textContent="Imagen no disponible"; return d; };
+  if(!url) return falta();
   const img=document.createElement("img");
   img.className="art"; img.src=url; img.alt=alt; img.loading="lazy"; img.decoding="async"; img.draggable=false; img.referrerPolicy="no-referrer";
-  img.addEventListener("error",()=>{ const d=document.createElement("span"); d.className="art-missing"; d.textContent="Imagen no disponible"; img.replaceWith(d); },{once:true});
+  img.addEventListener("error",()=>{
+    if(original && img.src!==original && !img.dataset.respaldo){ img.dataset.respaldo="1"; img.src=original; return; }
+    img.replaceWith(falta());
+  });
   return img;
 }
 
@@ -564,7 +573,7 @@ const ORDEN=[]; const dlg=$("#viewer"); let cur=0, LISTA=[];
 function pintar(){
   const n=LISTA[cur]; if(!n) return;
   dlg.style.setProperty("--vh",n._tono);
-  const art=$("#v-art"); art.replaceChildren(artNode(n, n.nombre));
+  const art=$("#v-art"); art.replaceChildren(artNode(n, n.nombre, true));
   $("#v-fam").textContent=n._sala.titulo;
   $("#v-name").textContent=n.nombre;
   const ul=$("#v-traits"); ul.replaceChildren();
@@ -597,7 +606,6 @@ function crearOrbita(cont, piezas){
     ORDEN.push(n);
     const b=document.createElement("button"); b.type="button"; b.className="orbit"; b.style.setProperty("--ih",n._tono);
     const f=document.createElement("span"); f.className="frame"; f.append(artNode(n, n.nombre));
-    if(n._semilla!==undefined){ const ch=document.createElement("img"); ch.className="hatch-seed"; ch.src=n._seedUrl||(SEMILLAS[n._semilla]||SEMILLAS[0]).img; ch.alt=""; ch.draggable=false; f.append(ch); }
     const l=document.createElement("span"); l.className="label"; l.textContent=n.nombre;
     b.append(f,l); ring.append(b); st.els.push(b);
     b.addEventListener("click",()=>{ if(st.moved>6){st.moved=0;return} abrir(n); });
@@ -652,7 +660,6 @@ function capsula(n,i){
     b.addEventListener("click",()=>ceremonia(n,b,i));
   } else {
     pod.className="hatch"; pod.append(artNode(n, n.nombre));
-    const chip=semImg(); chip.className="hatch-seed"; pod.append(chip);
     state.textContent="Cápsula abierta";
     b.addEventListener("click",()=>abrir(n));
   }
@@ -755,7 +762,7 @@ function prepararCeremonia(n){
     k.style.animationDelay=R(0,.2).toFixed(2)+"s";
     sp.append(k);
   }
-  const art=artNode(n, n.nombre); if(art.tagName==="IMG") art.loading="eager";
+  const art=artNode(n, n.nombre, true); if(art.tagName==="IMG") art.loading="eager";
   $("#cer-art").replaceChildren(art);
   $("#cer-name").textContent=n.nombre;
   $("#cer-fam").textContent=n._sala.titulo;

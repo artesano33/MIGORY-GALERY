@@ -2,6 +2,7 @@
 // Lo ejecuta GitHub Actions; la clave y la wallet llegan como secretos y nunca se publican.
 import { mkdir, writeFile } from "node:fs/promises";
 import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 
 const KEY = process.env.HELIUS_API_KEY;
 const WALLET = process.env.WALLET_ADDRESS;
@@ -70,13 +71,19 @@ const nfts = activos
 // el nfts.json ya publicado, para que la última pieza sellada no se confunda con una revelada.
 const PALABRAS_SIN_REVELAR = /unreveal|not revealed|sin revelar|mystery|hidden/i;
 
-async function datosAnteriores() {
+function baseSitio() {
   const repo = process.env.GITHUB_REPOSITORY || "";
   const [dueno, nombre] = repo.split("/");
-  if (!dueno || !nombre) return {};
-  const base = nombre.toLowerCase() === `${dueno.toLowerCase()}.github.io`
+  if (!dueno || !nombre) return "";
+  return nombre.toLowerCase() === `${dueno.toLowerCase()}.github.io`
     ? `https://${dueno.toLowerCase()}.github.io`
     : `https://${dueno.toLowerCase()}.github.io/${nombre}`;
+}
+const BASE = baseSitio();
+
+async function datosAnteriores() {
+  const base = BASE;
+  if (!base) return {};
   try {
     const r = await fetch(`${base}/data/nfts.json`, { signal: AbortSignal.timeout(10000), cache: "no-store" });
     if (!r.ok) return {};
@@ -164,31 +171,79 @@ async function cargarSharp() {
   }
 }
 
-const pendientes = [...new Set(nfts.map(n => n.imagen).filter(u => /^https?:\/\//i.test(u) && !colores[u]))];
-if (pendientes.length) {
-  const sharp = await cargarSharp();
-  if (sharp) {
-    let i = 0;
-    const trabajador = async () => {
-      while (i < pendientes.length) {
-        const url = pendientes[i++];
-        try {
-          const r = await fetch(url, { signal: AbortSignal.timeout(25000) });
-          if (!r.ok) throw new Error("HTTP " + r.status);
-          const buf = Buffer.from(await r.arrayBuffer());
-          const { data, info } = await sharp(buf, { animated: false }).resize(64, 64, { fit: "inside" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-          colores[url] = colorDominante(data, info.width, info.height);
-        } catch (e) {
-          console.log(`  No se pudo leer el color de una imagen (${e.message})`);
-        }
-      }
-    };
-    await Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]);
+// ---------- Imágenes ligeras ----------
+// Cada imagen se guarda en dos tamaños optimizados (WebP): una miniatura para las salas y una
+// versión grande para la ficha y la ceremonia. Las que ya se publicaron antes se reutilizan.
+const TAMANOS = { mini: 640, grande: 1400 };
+const miniaturasPrevias = (anterior.miniaturas && typeof anterior.miniaturas === "object") ? anterior.miniaturas : {};
+const miniaturas = {};
+const claveDe = url => createHash("sha1").update(url).digest("hex").slice(0, 16);
+const rutaDe = (clave, tam) => `img/${clave}-${TAMANOS[tam]}.webp`;
+await mkdir("sitio/img", { recursive: true });
+
+async function reutilizarPublicadas(clave) {
+  if (!BASE) return false;
+  try {
+    const bufs = {};
+    for (const tam of Object.keys(TAMANOS)) {
+      const r = await fetch(`${BASE}/${rutaDe(clave, tam)}`, { signal: AbortSignal.timeout(15000) });
+      if (!r.ok) return false;
+      bufs[tam] = Buffer.from(await r.arrayBuffer());
+    }
+    for (const tam of Object.keys(TAMANOS)) await writeFile(`sitio/${rutaDe(clave, tam)}`, bufs[tam]);
+    return true;
+  } catch {
+    return false;
   }
 }
+
+const urls = [...new Set(nfts.map(n => n.imagen).filter(u => /^https?:\/\//i.test(u)))];
+let sharp = null, sharpCargado = false;
+let reutilizadas = 0, generadas = 0;
+let i = 0;
+const trabajador = async () => {
+  while (i < urls.length) {
+    const url = urls[i++];
+    const clave = claveDe(url);
+    let lista = miniaturasPrevias[url] === clave && await reutilizarPublicadas(clave);
+    if (lista) reutilizadas++;
+    if (lista && colores[url]) { miniaturas[url] = clave; continue; }
+    try {
+      if (!sharpCargado) { sharpCargado = true; sharp = await cargarSharp(); }
+      if (!sharp) continue;
+      const r = await fetch(url, { signal: AbortSignal.timeout(30000) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (!colores[url]) {
+        const { data, info } = await sharp(buf, { animated: false }).resize(64, 64, { fit: "inside" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+        colores[url] = colorDominante(data, info.width, info.height);
+      }
+      if (!lista) {
+        for (const [tam, px] of Object.entries(TAMANOS)) {
+          await sharp(buf, { animated: false }).rotate()
+            .resize(px, px, { fit: "inside", withoutEnlargement: true })
+            .webp({ quality: tam === "mini" ? 80 : 86, effort: 5 })
+            .toFile(`sitio/${rutaDe(clave, tam)}`);
+        }
+        generadas++;
+        lista = true;
+      }
+    } catch (e) {
+      console.log(`  No se pudo procesar una imagen (${e.message})`);
+    }
+    if (lista) miniaturas[url] = clave;
+  }
+};
+// sharp se carga una sola vez antes de repartir el trabajo
+if (urls.some(u => !(miniaturasPrevias[u] && colores[u]))) { sharpCargado = true; sharp = await cargarSharp(); }
+await Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]);
+console.log(`Imágenes ligeras: ${generadas} nuevas, ${reutilizadas} reutilizadas.`);
+
 const enUso = {};
 for (const n of nfts) {
   if (colores[n.imagen]) { n.color = colores[n.imagen]; enUso[n.imagen] = colores[n.imagen]; }
+  const clave = miniaturas[n.imagen];
+  if (clave) { n.mini = rutaDe(clave, "mini"); n.grande = rutaDe(clave, "grande"); }
 }
 console.log(`Colores calculados: ${Object.keys(enUso).length} imágenes.`);
 
@@ -205,6 +260,6 @@ for (const [id, v] of Object.entries(resumen)) console.log(`  ${id}  ${v.colecci
 await mkdir("sitio/data", { recursive: true });
 await writeFile(
   "sitio/data/nfts.json",
-  JSON.stringify({ actualizado: new Date().toISOString(), marcadores: [...marcadores], colores: enUso, nfts }, null, 2)
+  JSON.stringify({ actualizado: new Date().toISOString(), marcadores: [...marcadores], colores: enUso, miniaturas, nfts }, null, 2)
 );
 console.log("\nGuardado en sitio/data/nfts.json");
