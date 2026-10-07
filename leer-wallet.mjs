@@ -1,6 +1,6 @@
 // Lee los NFTs de la wallet con la API DAS de Helius y los guarda en sitio/data/nfts.json.
 // Lo ejecuta GitHub Actions; la clave y la wallet llegan como secretos y nunca se publican.
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 
@@ -197,7 +197,30 @@ async function reutilizarPublicadas(clave) {
   }
 }
 
-const urls = [...new Set(nfts.map(n => n.imagen).filter(u => /^https?:\/\//i.test(u)))];
+// ---------- Solo las colecciones que muestra la galería ----------
+// Se leen los IDs de colección configurados en SALAS dentro de index.html. Los NFTs de otras
+// colecciones no se procesan ni se publican. Si no hay IDs configurados, se usan todos.
+async function coleccionesDeLaGaleria() {
+  for (const ruta of ["sitio/index.html", "index.html"]) {
+    try {
+      const html = await readFile(ruta, "utf8");
+      const ids = new Set();
+      for (const m of html.matchAll(/colecciones\s*:\s*\[([^\]]*)\]/g))
+        for (const id of m[1].matchAll(/["']([1-9A-HJ-NP-Za-km-z]{32,44})["']/g)) ids.add(id[1]);
+      return ids;
+    } catch {}
+  }
+  return new Set();
+}
+const delaGaleria = await coleccionesDeLaGaleria();
+const galeria = delaGaleria.size ? nfts.filter(n => delaGaleria.has(n.coleccionId)) : nfts;
+console.log(delaGaleria.size
+  ? `Colecciones de la galería: ${delaGaleria.size}. Piezas que se publican: ${galeria.length} de ${nfts.length}.`
+  : "No hay colecciones fijadas en la galería: se publican todas las piezas.");
+
+const nombresDe = {};
+for (const n of galeria) (nombresDe[n.imagen] ??= []).push(n.nombre);
+const urls = [...new Set(galeria.map(n => n.imagen).filter(u => /^https?:\/\//i.test(u)))];
 let sharp = null, sharpCargado = false;
 let reutilizadas = 0, generadas = 0;
 let i = 0;
@@ -229,7 +252,7 @@ const trabajador = async () => {
         lista = true;
       }
     } catch (e) {
-      console.log(`  No se pudo procesar una imagen (${e.message})`);
+      console.log(`  No se pudo procesar la imagen de ${(nombresDe[url] || ["una pieza"]).join(", ")} (${e.message})`);
     }
     if (lista) miniaturas[url] = clave;
   }
@@ -240,7 +263,7 @@ await Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]);
 console.log(`Imágenes ligeras: ${generadas} nuevas, ${reutilizadas} reutilizadas.`);
 
 const enUso = {};
-for (const n of nfts) {
+for (const n of galeria) {
   if (colores[n.imagen]) { n.color = colores[n.imagen]; enUso[n.imagen] = colores[n.imagen]; }
   const clave = miniaturas[n.imagen];
   if (clave) { n.mini = rutaDe(clave, "mini"); n.grande = rutaDe(clave, "grande"); }
@@ -260,6 +283,6 @@ for (const [id, v] of Object.entries(resumen)) console.log(`  ${id}  ${v.colecci
 await mkdir("sitio/data", { recursive: true });
 await writeFile(
   "sitio/data/nfts.json",
-  JSON.stringify({ actualizado: new Date().toISOString(), marcadores: [...marcadores], colores: enUso, miniaturas, nfts }, null, 2)
+  JSON.stringify({ actualizado: new Date().toISOString(), marcadores: [...marcadores], colores: enUso, miniaturas, nfts: galeria }, null, 2)
 );
 console.log("\nGuardado en sitio/data/nfts.json");
