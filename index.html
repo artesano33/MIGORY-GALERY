@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MIGORY — Colección privada</title>
+<title>MIGORY — Colección privada de Artesano</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -546,7 +546,7 @@ dialog::backdrop{background:rgba(3,4,3,.9);backdrop-filter:blur(8px)}
     <div id="seeds"></div>
   </div>
   <div class="hero-copy">
-    <p class="kicker">Colección privada</p>
+    <p class="kicker">Colección privada de Artesano</p>
     <h1>MIGORY</h1>
     <p class="lead">Una sala en la oscuridad del Migoryverse, reservada para las piezas que me pertenecen. Las que ya despertaron, las que siguen selladas y las que aún están por llegar.</p>
     <a class="enter" href="#salas">Cruzar el agujero de gusano</a>
@@ -1323,27 +1323,88 @@ fetch("data/nfts.json",{cache:"no-store"})
   });
 requestAnimationFrame(tick);
 
-/* ---------- Las estrellas se encienden al avanzar ---------- */
-const cv=$("#stars"), g=cv.getContext("2d"); let stars=[], W=0, H=0;
+/* ---------- El cielo: estrellas que se encienden al avanzar, titilan y de vez en cuando
+   cruzan cometas y asteroides ---------- */
+const cv=$("#stars"), g=cv.getContext("2d"); let stars=[], W=0, H=0, viajeros=[], proximo=0;
 function sizeStars(){
   const dpr=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight;
   cv.width=W*dpr; cv.height=H*dpr; g.setTransform(dpr,0,0,dpr,0,0);
   const n=Math.round(W*H/2600);
-  stars=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.2,t:Math.random(),a:Math.random()*.7+.2,
-    c:Math.random()<.12?`hsl(${[275,140,355,212,100][Math.floor(Math.random()*5)]} 90% 75%)`:"#fff"}));
+  stars=Array.from({length:n},()=>{
+    const titila=Math.random()<.45;   // solo algunas titilan
+    const r=Math.random()*1.3+.2;
+    return {x:Math.random()*W,y:Math.random()*H,r:titila?r*1.35+.25:r,t:Math.random(),a:titila?Math.random()*.3+.7:Math.random()*.7+.2,
+      c:Math.random()<.12?`hsl(${[275,140,355,212,100][Math.floor(Math.random()*5)]} 90% 75%)`:"#fff",
+      titila, p1:1.6+Math.random()*3.2, p2:3.5+Math.random()*5, f1:Math.random()*6.3, f2:Math.random()*6.3, hondo:.8+Math.random()*.18};
+  });
   drawStars();
 }
+function brillo(s,t){
+  if(!s.titila || reduce) return 1;
+  // dos ondas lentas que no coinciden: el brillo sube y baja sin un ritmo mecánico
+  const v=.6*Math.sin(t*6.2832/s.p1+s.f1)+.4*Math.sin(t*6.2832/s.p2+s.f2);   // entre -1 y 1
+  const k=Math.pow((v+1)/2,1.25);
+  return 1-s.hondo*(1-k);
+}
+/* Cometas y asteroides */
+function nuevoViajero(ahora){
+  const cometa=Math.random()<.7;
+  const deIzq=Math.random()<.5, ang=(deIzq?1:-1)*(cometa?(.25+Math.random()*.45):(.05+Math.random()*.2));
+  const vel=cometa?(260+Math.random()*260):(35+Math.random()*45);
+  const dx=(deIzq?1:-1)*Math.cos(Math.abs(ang)), dy=Math.sin(Math.abs(ang));
+  const x=deIzq?-80:W+80, y=Math.random()*H*(cometa?.55:.8);
+  if(cometa) return {tipo:"cometa",x,y,vx:dx*vel,vy:dy*vel,cola:110+Math.random()*170,r:1.2+Math.random()*1.1,
+    tono:Math.random()<.5?"205,225,255":"255,235,215",a:.75+Math.random()*.25};
+  const lados=7+Math.floor(Math.random()*3), tam=4+Math.random()*8;
+  return {tipo:"asteroide",x,y,vx:dx*vel,vy:dy*vel,rot:Math.random()*6.3,vr:(Math.random()-.5)*.8,
+    forma:Array.from({length:lados},(_,i)=>({a:i/lados*6.2832,r:tam*(.7+Math.random()*.45)})),tam};
+}
+function dibujaViajero(v){
+  if(v.tipo==="cometa"){
+    const m=Math.hypot(v.vx,v.vy), ux=v.vx/m, uy=v.vy/m, cx=v.x-ux*v.cola, cy=v.y-uy*v.cola;
+    const gr=g.createLinearGradient(v.x,v.y,cx,cy);
+    gr.addColorStop(0,`rgba(${v.tono},${v.a})`); gr.addColorStop(.25,`rgba(${v.tono},${v.a*.35})`); gr.addColorStop(1,`rgba(${v.tono},0)`);
+    g.strokeStyle=gr; g.lineWidth=v.r*1.6; g.lineCap="round";
+    g.beginPath(); g.moveTo(v.x,v.y); g.lineTo(cx,cy); g.stroke();
+    const h=g.createRadialGradient(v.x,v.y,0,v.x,v.y,v.r*7);
+    h.addColorStop(0,`rgba(255,255,255,${v.a})`); h.addColorStop(.3,`rgba(${v.tono},${v.a*.5})`); h.addColorStop(1,`rgba(${v.tono},0)`);
+    g.fillStyle=h; g.beginPath(); g.arc(v.x,v.y,v.r*7,0,6.2832); g.fill();
+  } else {
+    g.save(); g.translate(v.x,v.y); g.rotate(v.rot);
+    g.beginPath(); v.forma.forEach((p,i)=>{ const x=Math.cos(p.a)*p.r, y=Math.sin(p.a)*p.r; i?g.lineTo(x,y):g.moveTo(x,y); }); g.closePath();
+    const sombra=g.createLinearGradient(-v.tam,-v.tam,v.tam,v.tam);
+    sombra.addColorStop(0,"rgba(150,140,130,.85)"); sombra.addColorStop(1,"rgba(28,26,25,.9)");
+    g.fillStyle=sombra; g.fill(); g.strokeStyle="rgba(210,200,190,.25)"; g.lineWidth=.8; g.stroke(); g.restore();
+  }
+}
+let ultimo=performance.now();
 function drawStars(){
-  const max=document.documentElement.scrollHeight-H, p=max>0?Math.min(1,scrollY/max):1, lit=0.03+p*0.97;
+  const ahora=performance.now(), t=ahora/1000, dt=Math.min(.05,(ahora-ultimo)/1000); ultimo=ahora;
+  const max=document.documentElement.scrollHeight-H, p=max>0?Math.min(1,scrollY/max):1, lit=0.12+p*0.88;
   g.clearRect(0,0,W,H);
   for(const s of stars){ if(s.t>lit) continue;
-    g.globalAlpha=s.a*Math.min(1,(lit-s.t)*8); g.fillStyle=s.c; g.beginPath(); g.arc(s.x,s.y,s.r,0,Math.PI*2); g.fill(); }
+    const b=brillo(s,t), a=s.a*Math.min(1,(lit-s.t)*8)*b;
+    g.fillStyle=s.c;
+    if(s.titila && b>.55){
+      // al encenderse, la estrella gana un halo; las más grandes, un pequeño destello en cruz
+      g.globalAlpha=a*.18*(b-.55)/.45; g.beginPath(); g.arc(s.x,s.y,s.r*4,0,6.2832); g.fill();
+      if(s.r>1.25 && b>.82){ const l=s.r*5*(b-.82)/.18; g.globalAlpha=a*.55; g.fillRect(s.x-l,s.y-.35,l*2,.7); g.fillRect(s.x-.35,s.y-l,.7,l*2); }
+    }
+    g.globalAlpha=a; g.beginPath(); g.arc(s.x,s.y,s.r,0,6.2832); g.fill(); }
   g.globalAlpha=1;
+  if(!reduce){
+    if(!proximo) proximo=ahora+3500+Math.random()*4000;
+    if(ahora>proximo){ viajeros.push(nuevoViajero(ahora)); proximo=ahora+7000+Math.random()*11000; }
+    viajeros=viajeros.filter(v=>{ v.x+=v.vx*dt; v.y+=v.vy*dt; if(v.rot!==undefined) v.rot+=v.vr*dt;
+      const m=(v.cola||20)+40; return v.x>-m-100 && v.x<W+m+100 && v.y<H+m && v.y>-m-100; });
+    viajeros.forEach(dibujaViajero);
+  }
 }
-let pending=false;
-addEventListener("scroll",()=>{ if(pending)return; pending=true; requestAnimationFrame(()=>{drawStars();pending=false}); },{passive:true});
+function cielo(){ drawStars(); if(!reduce) requestAnimationFrame(cielo); }
+addEventListener("scroll",()=>{ if(reduce) drawStars(); },{passive:true});
 addEventListener("resize",sizeStars);
 sizeStars();
+if(!reduce) requestAnimationFrame(cielo);
 </script>
 </body>
 </html>
