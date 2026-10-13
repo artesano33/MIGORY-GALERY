@@ -5,38 +5,51 @@ import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 
 const KEY = process.env.HELIUS_API_KEY;
-const WALLET = process.env.WALLET_ADDRESS;
-if (!KEY || !WALLET) {
+// Una o varias wallets: en el secreto WALLET_ADDRESS se pueden poner varias direcciones
+// separadas por comas, espacios o saltos de línea. Se juntan los NFTs de todas.
+const WALLETS = [...new Set(String(process.env.WALLET_ADDRESS || "").split(/[\s,;]+/).map(w => w.trim()).filter(Boolean))];
+if (!KEY || !WALLETS.length) {
   console.error("Faltan los secretos HELIUS_API_KEY o WALLET_ADDRESS en GitHub (Settings > Secrets and variables > Actions).");
+  process.exit(1);
+}
+const malas = WALLETS.filter(w => !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(w));
+if (malas.length) {
+  console.error(`Hay ${malas.length} dirección(es) que no parecen de Solana en WALLET_ADDRESS. Revisa que estén bien copiadas.`);
   process.exit(1);
 }
 
 const URL_HELIUS = `https://mainnet.helius-rpc.com/?api-key=${KEY}`;
 const LIMITE = 1000;
 const activos = [];
+const vistos = new Set();
 
-for (let pagina = 1; ; pagina++) {
-  const r = await fetch(URL_HELIUS, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: "galeria-migory",
-      method: "getAssetsByOwner",
-      params: {
-        ownerAddress: WALLET,
-        page: pagina,
-        limit: LIMITE,
-        displayOptions: { showCollectionMetadata: true, showUnverifiedCollections: false }
-      }
-    })
-  });
-  if (!r.ok) throw new Error(`Helius respondió con el código ${r.status}. Revisa que la clave sea correcta.`);
-  const j = await r.json();
-  if (j.error) throw new Error(`Helius devolvió un error: ${j.error.message}`);
-  const lote = j.result?.items ?? [];
-  activos.push(...lote);
-  if (lote.length < LIMITE) break;
+for (const [n, wallet] of WALLETS.entries()) {
+  let deEsta = 0;
+  for (let pagina = 1; ; pagina++) {
+    const r = await fetch(URL_HELIUS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "galeria-migory",
+        method: "getAssetsByOwner",
+        params: {
+          ownerAddress: wallet,
+          page: pagina,
+          limit: LIMITE,
+          displayOptions: { showCollectionMetadata: true, showUnverifiedCollections: false }
+        }
+      })
+    });
+    if (!r.ok) throw new Error(`Helius respondió con el código ${r.status}. Revisa que la clave sea correcta.`);
+    const j = await r.json();
+    if (j.error) throw new Error(`Helius devolvió un error con la wallet ${n + 1}: ${j.error.message}`);
+    const lote = j.result?.items ?? [];
+    for (const a of lote) if (!vistos.has(a.id)) { vistos.add(a.id); activos.push(a); deEsta++; }
+    if (lote.length < LIMITE) break;
+  }
+  // Solo se muestran los primeros y últimos caracteres de cada wallet en el registro
+  console.log(`Wallet ${n + 1} (${wallet.slice(0, 4)}…${wallet.slice(-4)}): ${deEsta} activos.`);
 }
 
 const texto = v => (v === undefined || v === null ? "" : String(v));
