@@ -644,7 +644,7 @@ dialog::backdrop{background:rgba(3,4,3,.9);backdrop-filter:blur(8px)}
     <div class="agc-reveal">
       <div class="agc-art" id="agc-art"></div>
       <div class="agc-text"><div class="agc-info">
-        <p class="agc-kicker">Un nuevo Agent se ha revelado</p>
+        <p class="agc-kicker" id="agc-kicker">Un nuevo Agent se ha revelado</p>
         <h2 class="agc-name" id="agc-name"></h2>
         <p class="agc-fam" id="agc-fam"></p>
         <div class="agc-actions">
@@ -679,16 +679,26 @@ const SALAS = [
   { id:"fun-guys", titulo:"Fun Guys", subtitulo:"Ya despertaron", estilo:"orbita", tono:140,
     texto:"Giran en torno a la misma luz que dio origen a todo. Arrastra el círculo para recorrerlos y toca cualquiera para verlo de cerca.",
     buscar:["fun guy","funguy","fun guys"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
-  { id:"agentes", titulo:"Agents", subtitulo:"Monedas de oro", estilo:"monedas", tono:42,
+  { id:"agentes", titulo:"Agents", subtitulo:"Monedas de oro", estilo:"monedas", tono:42, singular:"Agent",
     texto:"Llegan como monedas de oro. Cuando se revelen, cada moneda se encenderá con el color de su Agent: tócala para fundirla y ver quién hay dentro.",
     // Cuando todas las monedas se han fundido, la sala muestra a los Agents con este texto:
     textoAbiertas:"Todas las monedas se han fundido. Los Agents que nacieron del oro ya están a la vista. Toca cualquiera para verlo de cerca.",
     buscar:["agent"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
-  { id:"infernals", titulo:"Infernals", subtitulo:"Recién llegados", estilo:"marcos", tono:10,
-    texto:"Nuevas presencias en el Migoryverse.", buscar:["infernal"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
+  { id:"infernals", titulo:"Infernals", subtitulo:"Esperando su revelación", estilo:"monedas", tono:10, singular:"Infernal",
+    texto:"Llegan sellados en monedas de oro. Cuando se revelen, cada moneda se encenderá con el color de su Infernal: tócala para fundirla y ver quién hay dentro.",
+    // Cuando todas las monedas se han fundido, la sala muestra a los Infernals con este texto:
+    textoAbiertas:"Todas las monedas se han fundido. Los Infernals que nacieron del oro ya están a la vista. Toca cualquiera para verlo de cerca.",
+    // moneda: imagen de la moneda sellada de esta familia. Si se deja vacío, usa la misma moneda de los Agents.
+    moneda:"",
+    buscar:["infernal"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
   { id:"terrestrials", titulo:"Terrestrials", subtitulo:"Recién llegados", estilo:"marcos", tono:100,
     texto:"Nuevas presencias en el Migoryverse.", buscar:["terrestrial"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] }
 ];
+
+/* Salas cuyas ceremonias ya hiciste: se muestran abiertas para todos los que visiten la galería,
+   sin que tengan que abrirlas. Cuando termines de abrir otra familia, agrega aquí su id
+   (por ejemplo: ["plastiks","agentes"]). En el modo ?ensayo esta lista no se aplica. */
+const ABIERTAS_PARA_TODOS = ["plastiks"];
 
 /* Cómo saber si una cápsula sigue sellada. Se considera sin revelar si:
    no tiene imagen, su nombre o atributos dicen "unrevealed" o similar,
@@ -797,6 +807,7 @@ try{ const g=JSON.parse(localStorage.getItem(CLAVE)||"[]"); if(Array.isArray(g))
 function marcarAbierta(n){ ABIERTAS.add(n.id); if(ENSAYO) return; try{localStorage.setItem(CLAVE,JSON.stringify([...ABIERTAS]))}catch(e){} }
 function estado(n){
   if(n._sellada && !ENSAYO) return "sellada";
+  if(!ENSAYO && ABIERTAS_PARA_TODOS.includes(n._sala.id)) return "abierta";
   return ABIERTAS.has(n.id) ? "abierta" : "lista";
 }
 const conCeremonia = s => s.estilo==="capsulas" || s.estilo==="monedas";
@@ -875,7 +886,7 @@ function capsula(n,i){
   const esMoneda=n._sala.estilo==="monedas";
   if(esMoneda) b.classList.add("moneda-ag");
   const sem=SEMILLAS[n._semilla]||SEMILLAS[0];
-  const semUrl=esMoneda ? MONEDA_AG : ((e==="sellada"?null:n._seedUrl)||sem.img);
+  const semUrl=esMoneda ? (n._sala.moneda||MONEDA_AG) : ((e==="sellada"?null:n._seedUrl)||sem.img);
   b.style.setProperty("--seed",`url("${semUrl}")`);
   const pod=document.createElement("span"); pod.className="seedpod";
   const name=document.createElement("span"); name.className="name"; name.textContent=n.nombre;
@@ -1118,7 +1129,9 @@ const PASOS_AG=[
 function prepararAg(n){
   AGBOX.className="agc"; AGBOX.style.setProperty("--ih",n._tono);
   const R=(a,b)=>a+Math.random()*(b-a);
-  $("#agc-img").src=MONEDA_AG;
+  const moneda=n._sala.moneda||MONEDA_AG;
+  $("#agc-img").src=moneda; AGBOX.style.setProperty("--moneda-ag",`url("${moneda}")`);
+  $("#agc-kicker").textContent=`Un nuevo ${n._sala.singular||n._sala.titulo} se ha revelado`;
   const go=$("#agc-gotas"); go.replaceChildren();
   for(let i=0;i<22;i++){ const g=document.createElement("span"); g.className="agc-gota";
     g.style.setProperty("--x",R(14,80).toFixed(1)+"%"); g.style.setProperty("--y",R(55,82).toFixed(1)+"%");
