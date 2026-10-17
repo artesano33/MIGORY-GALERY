@@ -474,6 +474,105 @@ main,header,footer{position:relative;z-index:1}
   .agc.f-ficha .agc-text{width:min(100%,30rem);max-height:70vh}
 }
 
+/* =================== Terrestrials: piedras y ceremonia de la estatua =================== */
+.capsule.piedra-te .seed-cracks path{stroke-width:2}
+#ceremonia-te{border:0;padding:0;margin:0;background:transparent;width:100%;height:100%;max-width:none;max-height:none;color:var(--ink)}
+#ceremonia-te::backdrop{background:var(--void)}
+.tec{--ih:30;--S:min(80vw,62vh,540px);position:fixed;inset:0;display:grid;place-items:center;overflow:hidden;cursor:pointer;
+  padding:calc(env(safe-area-inset-top,0px) + 1rem) 1.25rem calc(env(safe-area-inset-bottom,0px) + 1rem)}
+.tec.f-emerge{cursor:default;overflow-y:auto}
+.tec-escena{position:relative;grid-area:1/1;width:var(--S);aspect-ratio:1}
+.tec.f-emerge .tec-escena{opacity:0;transition:opacity 1s ease 1.2s}
+.tec-halo{position:absolute;inset:-75%;border-radius:50%;pointer-events:none;opacity:0;transform:scale(.7);
+  background:radial-gradient(circle,hsl(var(--ih) 100% 60% / .5),transparent 58%);transition:opacity 1.8s,transform 1.8s}
+@keyframes tec-temblor{0%{translate:0 0}20%{translate:-4px 2px}40%{translate:3px -3px}60%{translate:-3px 2px}80%{translate:4px -1px}100%{translate:0 0}}
+.tec-flota{position:absolute;inset:0;opacity:0;transform:scale(.94);transition:opacity 2s,transform 2s}
+.tec.f-flota .tec-flota{opacity:1;transform:none}
+.tec-sacude{position:absolute;inset:0}
+.tec.e-late .tec-sacude{animation:tec-temblor .3s linear infinite}
+.tec.e-desprende .tec-sacude{animation:none}
+.tec-color{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:20px;background:#0a0a0a}
+.tec-luz{position:absolute;inset:0;border-radius:20px;opacity:0;mix-blend-mode:screen;pointer-events:none;
+  background:radial-gradient(circle,hsl(var(--ih) 100% 80% / .9),hsl(var(--ih) 100% 60% / .35) 45%,transparent 75%)}
+.tec.e-desprende .tec-luz{animation:tec-luz 3.6s ease both}
+@keyframes tec-luz{0%{opacity:0}25%{opacity:.85}100%{opacity:0}}
+.tec-base{position:absolute;inset:0;background-image:var(--est);background-size:100% 100%}
+.tec-frag{position:absolute;inset:0;background-image:var(--est);background-size:100% 100%}
+.tec.sin-lienzo .tec-base,.tec.sin-lienzo .tec-frag{background-image:var(--roca-te),var(--est);background-size:cover,contain;background-position:center;background-repeat:no-repeat;
+  background-color:#2a2622;background-blend-mode:overlay,normal}
+.tec.sin-lienzo .tec-base,.tec.sin-lienzo .tec-frags{filter:grayscale(1) contrast(1.25) brightness(.8) sepia(.3)}
+.tec.sin-lienzo .tec-base{border-radius:20px}
+.tec.e-desprende .tec-base{visibility:hidden}
+.tec.e-desprende .tec-frag{animation:tec-caer var(--t) cubic-bezier(.45,0,.9,.55) var(--d) both}
+@keyframes tec-caer{
+  0%{transform:none;opacity:1;filter:brightness(1)}
+  10%{transform:translate(calc(var(--dx) * .04),-5px) rotate(calc(var(--r) * .04));filter:brightness(var(--b))}
+  75%{opacity:1}
+  100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0;filter:brightness(var(--b))}}
+.tec-bruto{position:absolute;inset:-4%;border-radius:12% 9% 14% 10%/10% 13% 9% 12%;
+  background-image:radial-gradient(circle at 34% 28%,rgba(255,236,210,.18),transparent 45%),radial-gradient(circle at 70% 82%,rgba(0,0,0,.55),transparent 60%),var(--roca-te);background-size:cover;
+  -webkit-mask:linear-gradient(100deg,transparent 42%,#000 58%) 100% 0/300% 100% no-repeat;mask:linear-gradient(100deg,transparent 42%,#000 58%) 100% 0/300% 100% no-repeat;
+  transition:-webkit-mask-position 3.4s ease-in-out,mask-position 3.4s ease-in-out}
+.tec.e-viento .tec-bruto{-webkit-mask-position:0 0;mask-position:0 0}
+.tec-polvo{position:absolute;inset:0;pointer-events:none;transition:opacity 1.2s}
+.tec-arena{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:2px;border-radius:2px;opacity:0;z-index:3;
+  background:linear-gradient(90deg,transparent,hsl(38 55% 84% / .95))}
+.tec.e-viento .tec-arena{animation:tec-arena var(--t) linear var(--d) infinite}
+@keyframes tec-arena{0%{opacity:0;transform:translateX(0)}15%{opacity:.9}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+.tec.e-grieta .tec-polvo{opacity:0}
+.tec-grietas{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2;
+  filter:drop-shadow(0 0 1.5px hsl(var(--ih) 100% 75%)) drop-shadow(0 0 6px hsl(var(--ih) 100% 55%))}
+.tec-grietas path{fill:none;stroke:hsl(var(--ih) 100% 86%);stroke-width:.42;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:100;stroke-dashoffset:100;transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1) var(--d,0s),stroke-width .6s}
+.tec.e-grieta .tec-grietas path{stroke-dashoffset:0}
+.tec.e-late .tec-grietas path{stroke-width:.62}
+.tec.e-late .tec-grietas{animation:tec-pulso .5s ease-in-out infinite}
+@keyframes tec-pulso{0%,100%{opacity:.8}50%{opacity:1}}
+.tec.e-desprende .tec-grietas{opacity:0;transition:opacity .5s}
+.tec.e-grieta .tec-halo{opacity:.45;transform:scale(.85)}
+.tec.e-late .tec-halo{opacity:.75;transform:scale(.95)}
+.tec.e-desprende .tec-halo{opacity:1;transform:scale(1.1)}
+.tec-sparks{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none;z-index:6}
+.tec-spk{position:absolute;left:0;top:0;width:7px;height:7px;border-radius:50%;opacity:0;background:hsl(var(--ih) 100% 80%);box-shadow:0 0 12px 3px hsl(var(--ih) 100% 65%)}
+@keyframes tec-spk{0%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.3)}}
+.tec-reveal{grid-area:1/1;width:100%;max-width:1150px;display:flex;align-items:center;justify-content:center;gap:0;
+  opacity:0;visibility:hidden;pointer-events:none;z-index:6;transition:gap 1.4s cubic-bezier(.6,0,.2,1)}
+.tec.f-emerge .tec-reveal{opacity:1;visibility:visible;pointer-events:auto}
+.tec-art{flex:0 0 auto;width:min(80vw,62vh,540px);aspect-ratio:1;border-radius:20px;overflow:hidden;background:#0a0a0a;opacity:0;
+  border:1px solid hsl(var(--ih) 80% 70% / .5);box-shadow:0 0 170px hsl(var(--ih) 100% 60% / .5);
+  transition:opacity 1.2s,width 1.4s cubic-bezier(.6,0,.2,1)}
+.tec-art .art{object-fit:contain}
+.tec.f-emerge .tec-art{opacity:1}
+.tec-text{flex:0 0 auto;width:0;overflow:hidden;transition:width 1.4s cubic-bezier(.6,0,.2,1)}
+.tec-info{width:min(30rem,40vw)}
+.tec-info>*{opacity:0;transform:translateY(12px);transition:opacity .9s,transform .9s}
+.tec-kicker{font-style:italic;color:hsl(var(--ih) 95% 74%);margin:0 0 .5rem;font-size:1.15rem}
+.tec-name{font-family:var(--display);font-weight:800;font-size:clamp(2rem,4.2vw,4rem);line-height:.98;margin:0 0 .75rem;overflow-wrap:break-word}
+.tec-fam{color:var(--ash);font-style:italic;margin:0 0 2rem}
+.tec-actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.tec.f-ficha .tec-reveal{gap:clamp(1.5rem,4vw,4rem)}
+.tec.f-ficha .tec-art{width:min(44vw,62vh,540px)}
+.tec.f-ficha .tec-text{width:min(30rem,40vw)}
+.tec.f-ficha .tec-info>*{opacity:1;transform:none}
+.tec.f-ficha .tec-info>:nth-child(1){transition-delay:.7s}
+.tec.f-ficha .tec-info>:nth-child(2){transition-delay:.9s}
+.tec.f-ficha .tec-info>:nth-child(3){transition-delay:1.1s}
+.tec.f-ficha .tec-info>:nth-child(4){transition-delay:1.4s}
+.tec-skip{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 1.5rem);text-align:center;margin:0;color:var(--ash);font-style:italic;font-size:.95rem;transition:opacity .6s;z-index:7}
+.tec.f-emerge .tec-skip{opacity:0}
+.tec.saltada .tec-escena{display:none}
+.tec.saltada .tec-art{opacity:1;transition:width 1.4s cubic-bezier(.6,0,.2,1)}
+.tec.saltada .tec-info>*{transition-delay:.2s!important}
+@media (max-width:760px){
+  .tec{--S:min(86vw,52vh)}
+  .tec-reveal{flex-direction:column;justify-content:center}
+  .tec-art,.tec.f-ficha .tec-art{width:min(86vw,52vh)}
+  .tec-text{width:min(100%,30rem);max-height:0;transition:max-height 1.4s cubic-bezier(.6,0,.2,1)}
+  .tec-info{width:100%}
+  .tec.f-ficha .tec-reveal{gap:1.5rem}
+  .tec.f-ficha .tec-text{width:min(100%,30rem);max-height:70vh}
+}
+
 /* ---------- Marcos con foco ---------- */
 .frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:clamp(2rem,4vw,3.25rem) clamp(1.25rem,3vw,2.25rem)}
 .piece{position:relative;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;text-align:left}
@@ -657,6 +756,37 @@ dialog::backdrop{background:rgba(3,4,3,.9);backdrop-filter:blur(8px)}
   </div>
 </dialog>
 
+<dialog id="ceremonia-te" aria-label="Revelación de un Terrestrial">
+  <div class="tec" id="tec">
+    <div class="tec-escena" aria-hidden="true">
+      <div class="tec-halo"></div>
+      <div class="tec-flota"><div class="tec-sacude">
+        <img class="tec-color" id="tec-color" alt="">
+        <div class="tec-luz"></div>
+        <div class="tec-base"></div>
+        <div class="tec-frags" id="tec-frags"></div>
+        <svg class="tec-grietas" id="tec-grietas" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+        <div class="tec-bruto"></div>
+      </div></div>
+      <div class="tec-polvo" id="tec-polvo"></div>
+      <div class="tec-sparks" id="tec-sparks"></div>
+    </div>
+    <div class="tec-reveal">
+      <div class="tec-art" id="tec-art"></div>
+      <div class="tec-text"><div class="tec-info">
+        <p class="tec-kicker" id="tec-kicker">Un nuevo Terrestrial se ha revelado</p>
+        <h2 class="tec-name" id="tec-name"></h2>
+        <p class="tec-fam" id="tec-fam"></p>
+        <div class="tec-actions">
+          <button class="v-btn" id="tec-ver" type="button">Ver ficha</button>
+          <button class="v-btn" id="tec-volver" type="button">Volver a la sala</button>
+        </div>
+      </div></div>
+    </div>
+    <p class="tec-skip">Toca para saltar la animación</p>
+  </div>
+</dialog>
+
 <script>
 /* =================================================================
    CONFIGURACIÓN DE LAS SALAS
@@ -668,7 +798,7 @@ dialog::backdrop{background:rgba(3,4,3,.9);backdrop-filter:blur(8px)}
      las palabras de "buscar". Así se descartan colecciones antiguas
      y NFTs falsos que llegan como spam.
      Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE = colección MIGORY
-   - estilo: "orbita", "capsulas" o "marcos".
+   - estilo: "orbita", "capsulas", "monedas", "piedras" o "marcos".
    ================================================================= */
 const SALAS = [
   { id:"plastiks", titulo:"Plastiks", subtitulo:"Nacidos de las cápsulas", estilo:"capsulas", tono:275,
@@ -691,14 +821,22 @@ const SALAS = [
     // moneda: imagen de la moneda sellada de esta familia. Si se deja vacío, usa la misma moneda de los Agents.
     moneda:"",
     buscar:["infernal"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
-  { id:"terrestrials", titulo:"Terrestrials", subtitulo:"Recién llegados", estilo:"marcos", tono:100,
-    texto:"Nuevas presencias en el Migoryverse.", buscar:["terrestrial"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] }
+  { id:"terrestrials", titulo:"Terrestrials", subtitulo:"Sellados en piedra", estilo:"piedras", tono:30, singular:"Terrestrial",
+    texto:"Los antiguos Golems renacen sellados en piedra. Cuando se revelen, cada piedra se encenderá con el color de su Terrestrial: tócala para despertar la estatua que guarda dentro.",
+    // Cuando todas las piedras han despertado, la sala muestra a los Terrestrials con este texto:
+    textoAbiertas:"Todas las piedras han despertado. Los Terrestrials que nacieron de la piedra ya están a la vista. Toca cualquiera para verlo de cerca.",
+    buscar:["terrestrial"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] }
 ];
 
 /* Salas cuyas ceremonias ya hiciste: se muestran abiertas para todos los que visiten la galería,
    sin que tengan que abrirlas. Cuando termines de abrir otra familia, agrega aquí su id
    (por ejemplo: ["plastiks","agentes"]). En el modo ?ensayo esta lista no se aplica. */
 const ABIERTAS_PARA_TODOS = ["plastiks"];
+
+/* Salas que quieres volver a sellar en tu navegador para repetir sus ceremonias.
+   Se aplica una sola vez por cada nombre: si algún día quieres volver a sellarlas,
+   cambia el nombre (por ejemplo "infernals-2"). */
+const VOLVER_A_SELLAR = { infernals: "infernals-1" };
 
 /* Cómo saber si una cápsula sigue sellada. Se considera sin revelar si:
    no tiene imagen, su nombre o atributos dicen "unrevealed" o similar,
@@ -766,10 +904,14 @@ function clasificar(nfts){
     const usos={}; s.piezas.forEach(p=>{ const u=safeUrl(p.imagen); if(u) usos[u]=(usos[u]||0)+1; });
     s.piezas.forEach(p=>{
       const u=safeUrl(p.imagen);
-      p._sellada = p.sinRevelar===true || !u || PALABRAS_SIN_REVELAR.test(p.nombre+" "+(p.atributos||[]).map(a=>a.tipo+" "+a.valor).join(" ")) || ((s.estilo==="capsulas"||s.estilo==="monedas") && usos[u]>1);
+      p._sellada = p.sinRevelar===true || !u || PALABRAS_SIN_REVELAR.test(p.nombre+" "+(p.atributos||[]).map(a=>a.tipo+" "+a.valor).join(" ")) || ((s.estilo==="capsulas"||s.estilo==="monedas"||s.estilo==="piedras") && usos[u]>1);
       p._tono = p.color && Number.isFinite(p.color.h) && !p._sellada ? p.color.h : (s.tono + (hash(p.id)%50) - 25 + 360) % 360;
       p._sala = s;
     });
+    if(s.estilo==="piedras"){
+      // Sellada: piedra. Revelada: el color que predomina en la imagen del Terrestrial.
+      s.piezas.forEach(p=>{ const conColor=p.color && Number.isFinite(p.color.h) && (!p._sellada || ENSAYO); p._tono = conColor ? p.color.h : 30; });
+    }
     if(s.estilo==="monedas"){
       // Sellada: dorada. Revelada: el color que predomina en la imagen del Agent.
       s.piezas.forEach(p=>{ const conColor=p.color && Number.isFinite(p.color.h) && (!p._sellada || ENSAYO); p._tono = conColor ? p.color.h : 42; });
@@ -804,13 +946,28 @@ const CLAVE="migory-capsulas-abiertas";
 if(PARAMS.has("reiniciar")){ try{localStorage.removeItem(CLAVE)}catch(e){} }
 let ABIERTAS=new Set();
 try{ const g=JSON.parse(localStorage.getItem(CLAVE)||"[]"); if(Array.isArray(g)) ABIERTAS=new Set(g); }catch(e){}
+function volverASellar(salas){
+  if(ENSAYO) return;
+  let hechos=[]; try{ hechos=JSON.parse(localStorage.getItem("migory-resellado")||"[]"); }catch(e){}
+  let cambio=false;
+  for(const s of salas){
+    const marca=VOLVER_A_SELLAR[s.id];
+    if(!marca || hechos.includes(marca)) continue;
+    for(const p of s.piezas) if(ABIERTAS.delete(p.id)) cambio=true;
+    hechos.push(marca);
+  }
+  try{
+    if(cambio) localStorage.setItem(CLAVE,JSON.stringify([...ABIERTAS]));
+    localStorage.setItem("migory-resellado",JSON.stringify(hechos));
+  }catch(e){}
+}
 function marcarAbierta(n){ ABIERTAS.add(n.id); if(ENSAYO) return; try{localStorage.setItem(CLAVE,JSON.stringify([...ABIERTAS]))}catch(e){} }
 function estado(n){
   if(n._sellada && !ENSAYO) return "sellada";
   if(!ENSAYO && ABIERTAS_PARA_TODOS.includes(n._sala.id)) return "abierta";
   return ABIERTAS.has(n.id) ? "abierta" : "lista";
 }
-const conCeremonia = s => s.estilo==="capsulas" || s.estilo==="monedas";
+const conCeremonia = s => s.estilo==="capsulas" || s.estilo==="monedas" || s.estilo==="piedras";
 const visible = n => conCeremonia(n._sala) ? estado(n)==="abierta" : (!n._sellada || !!safeUrl(n.imagen));
 
 /* ---------- Visor ---------- */
@@ -883,10 +1040,11 @@ function capsula(n,i){
   const e=estado(n);
   const b=document.createElement("button"); b.type="button"; b.className="capsule "+e; b.dataset.id=n.id;
   b.style.setProperty("--ih",n._tono); b.style.setProperty("--d",(-i*1.1)+"s");
-  const esMoneda=n._sala.estilo==="monedas";
+  const esMoneda=n._sala.estilo==="monedas", esPiedra=n._sala.estilo==="piedras";
   if(esMoneda) b.classList.add("moneda-ag");
+  if(esPiedra) b.classList.add("piedra-te");
   const sem=SEMILLAS[n._semilla]||SEMILLAS[0];
-  const semUrl=esMoneda ? (n._sala.moneda||MONEDA_AG) : ((e==="sellada"?null:n._seedUrl)||sem.img);
+  const semUrl=esPiedra ? TE.piedra(hash(n.id)) : esMoneda ? (n._sala.moneda||MONEDA_AG) : ((e==="sellada"?null:n._seedUrl)||sem.img);
   b.style.setProperty("--seed",`url("${semUrl}")`);
   const pod=document.createElement("span"); pod.className="seedpod";
   const name=document.createElement("span"); name.className="name"; name.textContent=n.nombre;
@@ -895,19 +1053,19 @@ function capsula(n,i){
   if(e==="sellada"){
     pod.setAttribute("aria-hidden","true"); pod.append(semImg()); state.textContent="Sin revelar";
     b.addEventListener("click",()=>{
-      state.textContent=esMoneda?"Brilla, pero todavía no se funde":"Vibra, pero todavía no se abre";
+      state.textContent=esPiedra?"Tiembla, pero todavía no despierta":esMoneda?"Brilla, pero todavía no se funde":"Vibra, pero todavía no se abre";
       b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
       clearTimeout(b._t); b._t=setTimeout(()=>{state.textContent="Sin revelar";b.classList.remove("shake")},2600);
     });
   } else if(e==="lista"){
     pod.setAttribute("aria-hidden","true"); pod.append(semImg());
     pod.insertAdjacentHTML("beforeend",esMoneda?'<span class="seed-core"></span>':'<span class="seed-core"></span><svg class="seed-cracks" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M30 26 L44 40 L40 50 L56 58 L52 68 L68 78 M44 40 L58 34 M56 58 L70 52 M40 50 L28 58"/></svg>');
-    state.textContent=esMoneda?"Lista para fundirse. Tócala.":"Lista para abrirse. Tócala.";
-    b.setAttribute("aria-label",(esMoneda?"Fundir la moneda de ":"Abrir la cápsula de ")+n.nombre);
-    b.addEventListener("click",()=>esMoneda?ceremoniaAg(n,b,i):ceremonia(n,b,i));
+    state.textContent=esPiedra?"Lista para despertar. Tócala.":esMoneda?"Lista para fundirse. Tócala.":"Lista para abrirse. Tócala.";
+    b.setAttribute("aria-label",(esPiedra?"Despertar la piedra de ":esMoneda?"Fundir la moneda de ":"Abrir la cápsula de ")+n.nombre);
+    b.addEventListener("click",()=>esPiedra?TE.ceremonia(n,b,i):esMoneda?ceremoniaAg(n,b,i):ceremonia(n,b,i));
   } else {
     pod.className="hatch"; pod.append(artNode(n, n.nombre));
-    state.textContent=esMoneda?"Moneda fundida":"Cápsula abierta";
+    state.textContent=esPiedra?"Piedra despertada":esMoneda?"Moneda fundida":"Cápsula abierta";
     b.addEventListener("click",()=>abrir(n));
   }
   b.append(pod,name,state);
@@ -1178,7 +1336,7 @@ function chispasAg(n){
   }
 }
 async function ceremoniaAg(n, boton, i){
-  if((AS && !AS.terminada) || (CS && !CS.terminada)) return;
+  if((AS && !AS.terminada) || (CS && !CS.terminada) || TE.activa()) return;
   AS={n, boton, i, timers:[], terminada:false};
   const yo=AS;
   const cargada=prepararAg(n);
@@ -1219,6 +1377,206 @@ AGBOX.addEventListener("click",()=>{ if(AS && !AS.terminada) concluirAg(true); }
 $("#agc-volver").onclick=cerrarAg;
 $("#agc-ver").onclick=()=>{ const n=AS&&AS.n; cerrarAg(); if(n) abrir(n); };
 
+/* ---------- Terrestrials: piedras y ceremonia de la estatua ----------
+   La piedra en bruto se erosiona con el viento y deja ver una estatua de piedra con la forma
+   del Terrestrial. La recorren grietas de luz, tiembla, y la piel de piedra se desprende de
+   arriba abajo hasta mostrar sus colores reales. */
+const TE=(()=>{
+  const R=(a,b)=>a+Math.random()*(b-a), f1=v=>v.toFixed(1);
+  const poly=pts=>"polygon("+pts.map(p=>f1(p[0])+"% "+f1(p[1])+"%").join(",")+")";
+  function azar(sem){ return ()=>{ sem|=0; sem=sem+0x6D2B79F5|0; let t=Math.imul(sem^sem>>>15,1|sem); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  const N=320; let ALTURA=null, ROCA=null, ROCA_URL=null;
+  function altura(){
+    if(ALTURA) return ALTURA;
+    const rnd=azar(7), out=new Float32Array(N*N); let amp=1, tot=0;
+    for(let o=0;o<6;o++){
+      const g=3<<o, G=new Float32Array((g+1)*(g+1)); for(let i=0;i<G.length;i++) G[i]=rnd();
+      for(let y=0;y<N;y++){ const fy=y/N*g, iy=fy|0; let ty=fy-iy; ty=ty*ty*(3-2*ty);
+        for(let x=0;x<N;x++){ const fx=x/N*g, ix=fx|0; let tx=fx-ix; tx=tx*tx*(3-2*tx);
+          const a=G[iy*(g+1)+ix], b=G[iy*(g+1)+ix+1], c=G[(iy+1)*(g+1)+ix], d=G[(iy+1)*(g+1)+ix+1];
+          out[y*N+x]+=amp*((a+(b-a)*tx)*(1-ty)+(c+(d-c)*tx)*ty); } }
+      tot+=amp; amp*=.5;
+    }
+    for(let i=0;i<out.length;i++) out[i]/=tot;
+    return ALTURA=out;
+  }
+  // Textura de piedra (granito cálido con relieve)
+  function roca(){
+    if(ROCA) return ROCA;
+    const H=altura(), cv=document.createElement("canvas"); cv.width=cv.height=N;
+    const cx=cv.getContext("2d"), im=cx.createImageData(N,N), rnd=azar(11);
+    for(let y=1;y<N-1;y++) for(let x=1;x<N-1;x++){
+      const i=y*N+x, h=H[i], relieve=1+(H[i-N-1]-H[i+N+1])*7;
+      const v=(.3+.42*h)*relieve+(rnd()<.025?(rnd()-.5)*.35:0)+Math.sin(y*.045+h*7)*.025;
+      const p=i*4; im.data[p]=Math.max(0,Math.min(255,v*206)); im.data[p+1]=Math.max(0,Math.min(255,v*188)); im.data[p+2]=Math.max(0,Math.min(255,v*166)); im.data[p+3]=255;
+    }
+    cx.putImageData(im,0,0); cx.drawImage(cv,1,1,N-2,N-2,0,0,N,N);
+    return ROCA=cv;
+  }
+  function rocaUrl(){ return ROCA_URL||(ROCA_URL=roca().toDataURL("image/jpeg",.86)); }
+
+  // Piedras selladas de las tarjetas: tres formas distintas, se reparten según la pieza
+  const PIEDRAS=[];
+  function piedra(k){
+    const i=Math.abs(k|0)%3;
+    if(PIEDRAS[i]) return PIEDRAS[i];
+    const M=360, cv=document.createElement("canvas"); cv.width=cv.height=M; const cx=cv.getContext("2d"), rnd=azar(101+i*17);
+    cx.beginPath();
+    for(let j=0;j<18;j++){ const a=(j+(rnd()-.5)*.25)/18*Math.PI*2, r=.87+rnd()*.13;
+      const x=M*(.5+Math.cos(a)*.46*r), y=M*(.52+Math.sin(a)*.42*r); j?cx.lineTo(x,y):cx.moveTo(x,y); }
+    cx.closePath(); cx.save(); cx.clip();
+    cx.drawImage(roca(),(i*40)%80,(i*60)%80,N-80,N-80,0,0,M,M);
+    let g=cx.createRadialGradient(M*.34,M*.28,0,M*.34,M*.28,M*.45); g.addColorStop(0,"rgba(255,236,210,.22)"); g.addColorStop(1,"rgba(255,236,210,0)");
+    cx.fillStyle=g; cx.fillRect(0,0,M,M);
+    g=cx.createRadialGradient(M*.68,M*.8,0,M*.68,M*.8,M*.62); g.addColorStop(0,"rgba(0,0,0,.62)"); g.addColorStop(1,"rgba(0,0,0,0)");
+    cx.fillStyle=g; cx.fillRect(0,0,M,M); cx.restore();
+    return PIEDRAS[i]=cv.toDataURL("image/webp",.9);
+  }
+
+  // La pieza convertida en estatua de piedra. Si el navegador no deja leer la imagen
+  // (viene de otro sitio), devuelve null y la estatua se hace con filtros.
+  function estatua(src){
+    return new Promise(res=>{
+      const img=new Image();
+      if(!/^(data:|blob:)/i.test(src) && new URL(src,location.href).origin!==location.origin) img.crossOrigin="anonymous";
+      const fin=v=>{ clearTimeout(t); res(v); }, t=setTimeout(()=>fin(null),8000);
+      img.onerror=()=>fin(null);
+      img.onload=()=>{
+        try{
+          const H=altura(), M=600, cv=document.createElement("canvas"); cv.width=cv.height=M; const cx=cv.getContext("2d");
+          cx.fillStyle="#0a0a0a"; cx.fillRect(0,0,M,M);
+          const k=Math.min(M/img.naturalWidth,M/img.naturalHeight), w=img.naturalWidth*k, h=img.naturalHeight*k;
+          cx.drawImage(img,(M-w)/2,(M-h)/2,w,h);
+          const d=cx.getImageData(0,0,M,M), L=new Float32Array(M*M);
+          for(let i=0;i<M*M;i++){ const p=i*4; L[i]=(d.data[p]*.3+d.data[p+1]*.59+d.data[p+2]*.11)/255; }
+          for(let y=1;y<M-1;y++) for(let x=1;x<M-1;x++){
+            const i=y*M+x, n=H[((y*N/M)|0)*N+((x*N/M)|0)], v=(.2+.62*L[i])*.76+n*.26+(L[i-M-1]-L[i+M+1])*1.5, p=i*4;
+            d.data[p]=Math.max(0,Math.min(255,v*216)); d.data[p+1]=Math.max(0,Math.min(255,v*202)); d.data[p+2]=Math.max(0,Math.min(255,v*184));
+          }
+          cx.putImageData(d,0,0);
+          cx.globalCompositeOperation="destination-in"; cx.beginPath();
+          if(cx.roundRect) cx.roundRect(0,0,M,M,22); else cx.rect(0,0,M,M); cx.fill();
+          fin(cv.toDataURL("image/webp",.9));
+        }catch(e){ fin(null); }
+      };
+      img.src=src;
+    });
+  }
+
+  function trazo(x,y,a,pasos,largo,ramas,d,out){
+    const pts=[[x,y]];
+    for(let k=0;k<pasos;k++){
+      a+=R(-.5,.5); const l=largo*R(.6,1.25);
+      x=Math.max(3,Math.min(97,x+Math.cos(a)*l)); y=Math.max(3,Math.min(97,y+Math.sin(a)*l));
+      pts.push([x,y]);
+      if(ramas>0 && Math.random()<.32) trazo(x,y,a+R(.6,1.1)*(Math.random()<.5?-1:1),Math.ceil(pasos/2),largo*.7,ramas-1,d+.3+k*.08,out);
+    }
+    out.push({pts,d});
+  }
+  function fragmentos(n){
+    const c=100/n, P=[];
+    for(let j=0;j<=n;j++){ const fila=[]; for(let i=0;i<=n;i++){
+      let x=i*c, y=j*c; if(i>0&&i<n) x+=R(-.32,.32)*c; if(j>0&&j<n) y+=R(-.32,.32)*c; fila.push([x,y]); } P.push(fila); }
+    let html="";
+    for(let j=0;j<n;j++) for(let i=0;i<n;i++){
+      const a=P[j][i], b=P[j][i+1], cc=P[j+1][i+1], d=P[j+1][i];
+      for(const t of ((i+j)%2 ? [[a,b,cc],[a,cc,d]] : [[a,b,d],[b,cc,d]])){
+        const cx=(t[0][0]+t[1][0]+t[2][0])/3, cy=(t[0][1]+t[1][1]+t[2][1])/3;
+        html+=`<span class="tec-frag" style="clip-path:${poly(t)};transform-origin:${f1(cx)}% ${f1(cy)}%;--dx:${((cx-50)*1.6+R(-24,24)).toFixed(0)}px;--dy:${R(38,75).toFixed(0)}vh;--r:${R(-150,150).toFixed(0)}deg;--t:${R(1.5,2.4).toFixed(2)}s;--d:${(cy/100*1.5+R(0,.35)).toFixed(2)}s;--b:${R(.65,1.25).toFixed(2)}"></span>`;
+      }
+    }
+    return html;
+  }
+
+  const PASOS=[
+    ["f-flota",2200],     // Aparece un bloque de piedra en bruto
+    ["e-viento",3700],    // El viento lo erosiona y deja ver la estatua
+    ["e-grieta",2700],    // Grietas de luz del color del Terrestrial
+    ["e-late",1500],      // La estatua tiembla
+    ["e-desprende",3300], // La piel de piedra cae de arriba abajo
+    ["f-emerge",0]        // Quedan sus colores reales
+  ];
+  const DLG=$("#ceremonia-te"), BOX=$("#tec"); let TS=null;
+  function preparar(n){
+    BOX.className="tec"; BOX.style.setProperty("--ih",n._tono);
+    BOX.style.setProperty("--roca-te",`url(${rocaUrl()})`);
+    $("#tec-kicker").textContent=`Un nuevo ${n._sala.singular||n._sala.titulo} se ha revelado`;
+    $("#tec-name").textContent=n.nombre; $("#tec-fam").textContent=n._sala.titulo;
+    $("#tec-sparks").replaceChildren(); $("#tec-frags").innerHTML=""; $("#tec-color").removeAttribute("src");
+    const lista=[]; for(let k=0;k<4;k++) trazo(R(28,72),R(22,72),R(0,6.3),5,R(5,8),2,k*.3,lista);
+    $("#tec-grietas").innerHTML=lista.map(g=>`<path pathLength="100" style="--d:${g.d.toFixed(2)}s" d="M${g.pts.map(p=>f1(p[0])+" "+f1(p[1])).join(" L")}"/>`).join("");
+    let ar=""; for(let i=0;i<70;i++) ar+=`<span class="tec-arena" style="--x:${R(-35,55).toFixed(0)}%;--y:${R(0,100).toFixed(0)}%;--s:${R(20,70).toFixed(0)}px;--dx:${R(50,90).toFixed(0)}vw;--dy:${R(-30,30).toFixed(0)}px;--t:${R(.7,1.5).toFixed(2)}s;--d:${(-R(0,1.5)).toFixed(2)}s"></span>`;
+    $("#tec-polvo").innerHTML=ar;
+    const art=artNode(n, n.nombre, true); if(art.tagName==="IMG") art.loading="eager";
+    $("#tec-art").replaceChildren(art);
+    // La estatua se prepara mientras el bloque en bruto aparece
+    return new Promise(r=>{
+      if(art.tagName!=="IMG") return r(false);
+      if(art.complete && art.naturalWidth) return r(true);
+      art.addEventListener("load",()=>r(true),{once:true}); art.addEventListener("error",()=>r(false),{once:true}); setTimeout(()=>r(false),7000);
+    }).then(async ok=>{
+      const art2=$("#tec-art img"); const src=ok && art2 ? (art2.currentSrc||art2.src) : "";
+      if(!src){ BOX.classList.add("sin-lienzo"); return; }
+      $("#tec-color").src=src;
+      const est=await estatua(src);
+      if(est) BOX.style.setProperty("--est",`url(${est})`);
+      else { BOX.classList.add("sin-lienzo"); BOX.style.setProperty("--est",`url("${src}")`); }
+      $("#tec-frags").innerHTML=fragmentos(7);
+    });
+  }
+  function esperar(ms){ return new Promise(r=>{ const t=setTimeout(r,ms); if(TS) TS.timers.push(t); }); }
+  function chispas(n){
+    const sp=$("#tec-sparks");
+    for(let i=0;i<n;i++){
+      const k=document.createElement("span"); k.className="tec-spk";
+      const a=Math.random()*Math.PI*2, d=25+Math.random()*55;
+      k.style.setProperty("--dx",(Math.cos(a)*d).toFixed(1)+"vmin"); k.style.setProperty("--dy",(Math.sin(a)*d).toFixed(1)+"vmin");
+      k.style.animation=`tec-spk ${(1.2+Math.random()*.8).toFixed(2)}s cubic-bezier(.15,.8,.25,1) both`;
+      sp.append(k); setTimeout(()=>k.remove(),2400);
+    }
+  }
+  async function ceremonia(n, boton, i){
+    if((TS && !TS.terminada) || (AS && !AS.terminada) || (CS && !CS.terminada)) return;
+    TS={n, boton, i, timers:[], terminada:false}; const yo=TS;
+    const lista=preparar(n);
+    DLG.showModal();
+    marcarAbierta(n);
+    if(reduce){ concluir(true); return; }
+    await esperar(80); if(yo.terminada) return;
+    for(const [paso,ms] of PASOS){
+      if(paso==="e-viento"){ await lista; if(yo.terminada) return; }
+      BOX.classList.add(paso);
+      if(paso==="e-desprende") chispas(14);
+      if(paso==="f-emerge") break;
+      await esperar(ms); if(yo.terminada) return;
+    }
+    // La imagen queda sola; poco después se desliza y aparece su ficha
+    await esperar(3500); if(yo.terminada) return;
+    concluir(false);
+  }
+  function concluir(saltada){
+    const st=TS; if(!st || st.terminada) return;
+    st.terminada=true; st.timers.forEach(clearTimeout);
+    if(saltada) BOX.classList.add("saltada");
+    BOX.classList.add(...PASOS.map(p=>p[0]),"f-ficha");
+    const nuevo=capsula(st.n, st.i); st.boton.replaceWith(nuevo); st.boton=nuevo;
+    actualizarCuentas();
+    setTimeout(()=>{ if(DLG.open) $("#tec-ver").focus({preventScroll:true}); },1500);
+  }
+  function cerrar(){ if(DLG.open) DLG.close(); }
+  DLG.addEventListener("close",()=>{
+    if(!TS) return;
+    if(!TS.terminada) concluir(true);
+    if(revisarSala(TS.n._sala)) return;   // era la última piedra: la sala muestra a todos los Terrestrials
+    if(TS.boton) TS.boton.focus({preventScroll:true});
+  });
+  DLG.addEventListener("cancel",e=>{ if(TS && !TS.terminada){ e.preventDefault(); concluir(true); } });
+  BOX.addEventListener("click",()=>{ if(TS && !TS.terminada) concluir(true); });
+  $("#tec-volver").onclick=cerrar;
+  $("#tec-ver").onclick=()=>{ const n=TS&&TS.n; cerrar(); if(n) abrir(n); };
+  return { piedra, ceremonia, activa:()=>!!(TS && !TS.terminada) };
+})();
+
 /* ---------- Marcos ---------- */
 function crearMarcos(cont, piezas){
   const grid=document.createElement("div"); grid.className="frames";
@@ -1243,7 +1601,7 @@ const SALAS_LLENAS=[];
 function estiloDe(s){
   let e=s.estilo;
   // Cuando ya no queda ninguna cápsula por abrir, la sala pasa a la órbita
-  if((e==="capsulas"||e==="monedas") && s.piezas.length && s.piezas.every(p=>estado(p)==="abierta")) e="orbita";
+  if((e==="capsulas"||e==="monedas"||e==="piedras") && s.piezas.length && s.piezas.every(p=>estado(p)==="abierta")) e="orbita";
   if(e==="orbita" && s.piezas.length>8) e="marcos";
   return e;
 }
@@ -1254,7 +1612,7 @@ function construirSala(sec,s){
   const desc=sec.querySelector(".desc");
   if(desc) desc.textContent=(conCeremonia(s) && s._estilo!==s.estilo && s.textoAbiertas) ? s.textoAbiertas : s.texto;
   if(s._estilo==="orbita") crearOrbita(sec,s.piezas);
-  else if(s._estilo==="capsulas"||s._estilo==="monedas") crearCapsulas(sec,s.piezas);
+  else if(s._estilo==="capsulas"||s._estilo==="monedas"||s._estilo==="piedras") crearCapsulas(sec,s.piezas);
   else crearMarcos(sec,s.piezas);
 }
 function revisarSala(s){
@@ -1268,7 +1626,7 @@ function actualizarCuentas(){
     const partes=[`<strong>${contar(s.piezas.length)}</strong> en la colección`];
     if(conCeremonia(s)){
       const sell=s.piezas.filter(p=>estado(p)==="sellada").length, lis=s.piezas.filter(p=>estado(p)==="lista").length;
-      if(lis) partes.push(`${lis} ${lis===1?"lista":"listas"} para ${s.estilo==="monedas"?"fundirse":"abrirse"}`);
+      if(lis) partes.push(`${lis} ${lis===1?"lista":"listas"} para ${s.estilo==="monedas"?"fundirse":s.estilo==="piedras"?"despertar":"abrirse"}`);
       if(sell) partes.push(`${sell} sin revelar`);
     }
     s._cuenta.innerHTML=partes.join(", ");
@@ -1325,6 +1683,7 @@ fetch("data/nfts.json",{cache:"no-store"})
   .then(async data=>{
     const nfts=Array.isArray(data?.nfts)?data.nfts:[];
     const salas=clasificar(nfts);
+    volverASellar(salas);
     await prepararSemillas(salas);
     if(!data?.actualizado) aviso("La wallet todavía no se ha leído","Ejecuta la acción “Galería MIGORY” en la pestaña Actions de GitHub para cargar tus NFTs.");
     else if(!salas.some(s=>s.piezas.length)) aviso("No encontré piezas de MIGORY en la wallet","Revisa en el registro de la acción qué colecciones se encontraron y ajusta las palabras o los IDs en la configuración de SALAS.");
