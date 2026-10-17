@@ -1,0 +1,27 @@
+name: Descargar imágenes MIGORY
+
+on:
+  workflow_dispatch:   # solo se ejecuta cuando pulsas "Run workflow"
+
+permissions:
+  contents: read
+
+jobs:
+  descargar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Descargar las imágenes reveladas
+        run: node descargar-imagenes.mjs
+
+      - name: Preparar el archivo para descargar
+        uses: actions/upload-artifact@v4
+        with:
+          name: imagenes-MIGORY
+          path: MIGORY
+          retention-days: 30
