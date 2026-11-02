@@ -113,7 +113,7 @@ main,header,footer{position:relative;z-index:1}
 .capsule.sellada .seed-img{filter:brightness(.55) saturate(.7) drop-shadow(0 0 8px hsl(var(--ih) 80% 50% / .25))}
 .capsule.sellada:hover .seed-img,.capsule.sellada:focus-visible .seed-img{filter:brightness(.72) saturate(.85) drop-shadow(0 0 18px hsl(var(--ih) 90% 55% / .4))}
 .capsule.lista .seedpod{animation:rumble 2.6s linear infinite;animation-delay:var(--d)}
-.capsule.lista .seed-img{animation:seed-pulse 1.3s ease-in-out infinite}
+.capsule.lista .seed-img{filter:brightness(1.3) saturate(1.3) drop-shadow(0 0 16px hsl(var(--ih) 100% 62% / .85))}
 .capsule.lista .seed-core{animation:fuga 1.3s ease-in-out infinite}
 .capsule.lista .seed-cracks{animation:fuga 1.3s ease-in-out infinite}
 @keyframes seed-pulse{
@@ -153,6 +153,11 @@ main,header,footer{position:relative;z-index:1}
 @keyframes hum-fuerte{0%,100%{filter:brightness(1) saturate(1.1)}50%{filter:brightness(1.6) saturate(1.4)}}
 @keyframes fuga{0%,100%{opacity:.35}50%{opacity:1}}
 @keyframes halo{0%,100%{opacity:.6;transform:scale(.95)}50%{opacity:1;transform:scale(1.08)}}
+/* Rendimiento: las tarjetas fuera de la pantalla se quedan quietas (así el móvil no se queda sin memoria) */
+.capsule:not(.en-vista),.capsule:not(.en-vista) *,.capsule:not(.en-vista)::before,.capsule:not(.en-vista)::after,
+.capsule:not(.en-vista) *::before,.capsule:not(.en-vista) *::after{animation:none!important}
+.capsule:not(.en-vista) .seed-core,.capsule:not(.en-vista) .seed-cracks,.capsule:not(.en-vista) .crack,
+.capsule:not(.en-vista)::before,.capsule:not(.en-vista) .seedpod::after,.capsule:not(.en-vista) .pod::before{display:none}
 
 /* ---------- Ceremonia de revelación ---------- */
 #ceremonia{border:0;padding:0;margin:0;background:transparent;width:100%;height:100%;max-width:none;max-height:none;color:var(--ink)}
@@ -809,20 +814,23 @@ const SALAS = [
   { id:"fun-guys", titulo:"Fun Guys", subtitulo:"Ya despertaron", estilo:"orbita", tono:140,
     texto:"Giran en torno a la misma luz que dio origen a todo. Arrastra el círculo para recorrerlos y toca cualquiera para verlo de cerca.",
     buscar:["fun guy","funguy","fun guys"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
-  { id:"agentes", titulo:"Agents", subtitulo:"Monedas de oro", estilo:"monedas", tono:42, singular:"Agent",
-    texto:"Llegan como monedas de oro. Cuando se revelen, cada moneda se encenderá con el color de su Agent: tócala para fundirla y ver quién hay dentro.",
+  { id:"agentes", titulo:"Agents", subtitulo:"Nacidos del oro", estilo:"marcos", tono:42, singular:"Agent",
+    // Para volver a mostrarlos como monedas con su ceremonia, cambia estilo:"marcos" por estilo:"monedas".
+    texto:"Los Agents de la colección. Toca cualquiera para verlo de cerca.",
     // Cuando todas las monedas se han fundido, la sala muestra a los Agents con este texto:
     textoAbiertas:"Todas las monedas se han fundido. Los Agents que nacieron del oro ya están a la vista. Toca cualquiera para verlo de cerca.",
     buscar:["agent"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
-  { id:"infernals", titulo:"Infernals", subtitulo:"Esperando su revelación", estilo:"monedas", tono:10, singular:"Infernal",
-    texto:"Llegan sellados en monedas de oro. Cuando se revelen, cada moneda se encenderá con el color de su Infernal: tócala para fundirla y ver quién hay dentro.",
+  { id:"infernals", titulo:"Infernals", subtitulo:"Los antiguos Demons", estilo:"marcos", tono:10, singular:"Infernal",
+    // Para volver a mostrarlos como monedas con su ceremonia, cambia estilo:"marcos" por estilo:"monedas".
+    texto:"Los Infernals de la colección. Toca cualquiera para verlo de cerca.",
     // Cuando todas las monedas se han fundido, la sala muestra a los Infernals con este texto:
     textoAbiertas:"Todas las monedas se han fundido. Los Infernals que nacieron del oro ya están a la vista. Toca cualquiera para verlo de cerca.",
     // moneda: imagen de la moneda sellada de esta familia. Si se deja vacío, usa la misma moneda de los Agents.
     moneda:"",
     buscar:["infernal"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] },
-  { id:"terrestrials", titulo:"Terrestrials", subtitulo:"Sellados en piedra", estilo:"piedras", tono:30, singular:"Terrestrial",
-    texto:"Los antiguos Golems renacen sellados en piedra. Cuando se revelen, cada piedra se encenderá con el color de su Terrestrial: tócala para despertar la estatua que guarda dentro.",
+  { id:"terrestrials", titulo:"Terrestrials", subtitulo:"Los antiguos Golems", estilo:"marcos", tono:30, singular:"Terrestrial",
+    // Para volver a mostrarlos como piedras con la ceremonia de la Estatua, cambia estilo:"marcos" por estilo:"piedras".
+    texto:"Los Terrestrials de la colección. Toca cualquiera para verlo de cerca.",
     // Cuando todas las piedras han despertado, la sala muestra a los Terrestrials con este texto:
     textoAbiertas:"Todas las piedras han despertado. Los Terrestrials que nacieron de la piedra ya están a la vista. Toca cualquiera para verlo de cerca.",
     buscar:["terrestrial"], colecciones:["Ba7yhwin5hRo6g3Gjb5KEmuppKuhr1hiuLxQFezt1qSE"] }
@@ -1003,7 +1011,8 @@ const RINGS=[];
 function crearOrbita(cont, piezas){
   const ring=document.createElement("div"); ring.className="ring";
   ring.innerHTML='<div class="orb" aria-hidden="true"></div>';
-  const st={ring, els:[], ang:0, hover:false, drag:null, moved:0};
+  const st={ring, els:[], ang:0, hover:false, drag:null, moved:0, vis:!VISTA};
+  ring._ring=st; if(VISTA) VISTA.observe(ring);
   piezas.forEach(n=>{
     ORDEN.push(n);
     const b=document.createElement("button"); b.type="button"; b.className="orbit"; b.style.setProperty("--ih",n._tono);
@@ -1032,10 +1041,17 @@ function layoutRing(st){
     el.style.filter=z<-0.25?`blur(${((-z-0.25)*3).toFixed(2)}px) brightness(.7)`:"none";
   });
 }
-function tick(){ for(const st of RINGS){ if(!reduce&&!st.hover&&!st.drag&&st.els.length>1) st.ang+=0.0024; layoutRing(st); } requestAnimationFrame(tick); }
+function tick(){ for(const st of RINGS){ if(!st.vis && st.listo) continue; if(!reduce&&!st.hover&&!st.drag&&st.els.length>1) st.ang+=0.0024; layoutRing(st); st.listo=true; } requestAnimationFrame(tick); }
 
 /* ---------- Cápsulas ---------- */
 const crackSVG='<svg class="crack" viewBox="0 0 120 200" preserveAspectRatio="none" aria-hidden="true"><path d="M60 0 L54 40 L66 70 L50 110 L64 150 L58 200"/><path d="M54 40 L30 58 M66 70 L92 86 M50 110 L24 130 M64 150 L90 168"/></svg>';
+const VISTA = "IntersectionObserver" in window
+  ? new IntersectionObserver(es=>es.forEach(x=>{
+      if(x.target._ring) x.target._ring.vis=x.isIntersecting;
+      else x.target.classList.toggle("en-vista",x.isIntersecting);
+    }),{rootMargin:"120px 0px"})
+  : null;
+function vigilar(el){ if(VISTA) VISTA.observe(el); else el.classList.add("en-vista"); }
 function capsula(n,i){
   const e=estado(n);
   const b=document.createElement("button"); b.type="button"; b.className="capsule "+e; b.dataset.id=n.id;
@@ -1069,6 +1085,7 @@ function capsula(n,i){
     b.addEventListener("click",()=>abrir(n));
   }
   b.append(pod,name,state);
+  vigilar(b);
   return b;
 }
 function crearCapsulas(cont, piezas){
